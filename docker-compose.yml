@@ -1,0 +1,223 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Query Side)
+  postgres:
+    image: postgres:15-alpine
+    container_name: billing-postgres
+    environment:
+      POSTGRES_DB: billing_db
+      POSTGRES_USER: billing_user
+      POSTGRES_PASSWORD: billing_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-postgres.sql:/docker-entrypoint-initdb.d/init-postgres.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U billing_user -d billing_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - billing-network
+
+  # Axon Server (Event Store and Message Bus)
+  axonserver:
+    image: axoniq/axonserver:4.6.3
+    container_name: billing-axonserver
+    environment:
+      AXONIQ_AXONSERVER_HOSTNAME: axonserver
+      AXONIQ_AXONSERVER_EVENTSTORE_TOKEN: token
+      AXONIQ_AXONSERVER_CONTROL_TOKEN: token
+      AXONIQ_AXONSERVER_INTERNAL_HOSTNAME: localhost
+    ports:
+      - "8024:8024"   # HTTP UI
+      - "8124:8124"   # gRPC
+    volumes:
+      - axon_data:/data
+      - axon_logs:/logs
+      - axon_events:/eventstore
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8024/v1/public/context"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - billing-network
+
+  # MinIO Object Storage (S3-compatible)
+  minio:
+    image: minio/minio:latest
+    container_name: billing-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - billing-network
+
+  # MailHog (SMTP testing)
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: billing-mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - billing-network
+
+  # OCR Service (FastAPI + Tesseract)
+  ocr:
+    build:
+      context: ./ocr-service
+      dockerfile: Dockerfile
+    container_name: billing-ocr
+    environment:
+      - OCR_LOG_LEVEL=INFO
+      - MAX_FILE_SIZE=10485760
+      - SUPPORTED_FORMATS=pdf,jpg,jpeg,png,tiff,bmp
+      - TESSERACT_VERSION=5.3.0
+      - TESSERACT_CMD=/usr/bin/tesseract
+      - SERVICE_HOST=0.0.0.0
+      - SERVICE_PORT=7070
+    ports:
+      - "7070:7070"
+    volumes:
+      - ocr_temp:/tmp/ocr
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7070/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      axonserver:
+        condition: service_healthy
+    networks:
+      - billing-network
+
+  # Billing Backend Service (Spring Boot + Axon)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: billing-backend
+    environment:
+      # Application Configuration
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8080
+
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/billing_db
+      SPRING_DATASOURCE_USERNAME: billing_user
+      SPRING_DATASOURCE_PASSWORD: billing_password
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+
+      # JPA Configuration
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_JPA_SHOW_SQL: false
+
+      # Axon Framework Configuration
+      AXON_SERVER_ENDPOINTS: axonserver:8124
+      AXON_AXONSERVER_SERVERS: axonserver:8124
+      AXON_SERIALIZATION_XSTREAM: ALLOW_ANY_TYPE=true
+
+      # MinIO Configuration
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET_NAME: bills
+      MINIO_REGION: us-east-1
+
+      # OCR Service Configuration
+      OCR_SERVICE_URL: http://ocr:7070
+
+      # Mail Configuration
+      SPRING_MAIL_HOST: mailhog
+      SPRING_MAIL_PORT: 1025
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: false
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: false
+
+      # Application Specific
+      BILLING_UPLOAD_MAX_SIZE: 10MB
+      BILLING_APPROVAL_REQUIRED: true
+
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      axonserver:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      mailhog:
+        condition: service_healthy
+      ocr:
+        condition: service_healthy
+    networks:
+      - billing-network
+
+volumes:
+  postgres_data:
+    driver: local
+    name: billing_postgres_data
+  axon_data:
+    driver: local
+    name: billing_axon_data
+  axon_logs:
+    driver: local
+    name: billing_axon_logs
+  axon_events:
+    driver: local
+    name: billing_axon_events
+  minio_data:
+    driver: local
+    name: billing_minio_data
+  ocr_temp:
+    driver: local
+    name: billing_ocr_temp
+
+networks:
+  billing-network:
+    driver: bridge

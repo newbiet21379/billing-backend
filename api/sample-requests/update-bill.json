@@ -1,0 +1,8 @@
+{
+  "title": "Updated Office Supplies Invoice",
+  "total": 175.50,
+  "vendor": "Office Depot",
+  "dueDate": "2024-12-20",
+  "category": "OFFICE_SUPPLIES",
+  "description": "Updated monthly office supplies restocking"
+}

@@ -1,0 +1,76 @@
+# Prometheus Configuration for Billing Backend Service
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'billing-backend-prometheus'
+
+rule_files:
+  - "alert_rules.yml"
+
+scrape_configs:
+  # Billing Backend Application
+  - job_name: 'billing-backend'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 60s
+    scrape_timeout: 30s
+    honor_labels: true
+    params:
+      format: ['prometheus']
+
+  # JVM Metrics (if using separate Prometheus JMX exporter)
+  - job_name: 'billing-backend-jvm'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 30s
+
+  # Axon Server Metrics
+  - job_name: 'axon-server'
+    static_configs:
+      - targets: ['localhost:8024']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 30s
+
+  # OCR Service Metrics (if available)
+  - job_name: 'ocr-service'
+    static_configs:
+      - targets: ['localhost:7070']
+    metrics_path: '/metrics'  # Assuming OCR service exposes metrics
+    scrape_interval: 30s
+
+  # PostgreSQL Exporter (optional)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['localhost:9187']  # postgres_exporter default port
+    scrape_interval: 30s
+
+  # MinIO Metrics (optional)
+  - job_name: 'minio'
+    static_configs:
+      - targets: ['localhost:9000']
+    metrics_path: '/minio/v2/metrics/cluster'
+    scrape_interval: 30s
+
+  # Docker Container Metrics (optional)
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['localhost:9323']  # cadvisor default port
+    scrape_interval: 30s
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Load alert rules
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - localhost:9093

@@ -1,0 +1,61 @@
+{
+  "success": true,
+  "data": {
+    "billId": "bill_123e4567-e89b-12d3-a456-426614174000",
+    "title": "Office Supplies Invoice",
+    "total": 150.75,
+    "vendor": "Staples",
+    "status": "COMPLETED",
+    "category": "OFFICE_SUPPLIES",
+    "description": "Monthly office supplies restocking",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T11:30:00Z",
+    "dueDate": "2024-12-15T00:00:00Z",
+    "ocrData": {
+      "extractedText": "STAPLES INVOICE\nInvoice #: INV-2024-001\nDate: 2024-01-10\n\nOffice Supplies:\n- Pens (50) @ $1.50 = $75.00\n- Paper (10 reams) @ $7.00 = $70.00\n\nSubtotal: $145.00\nTax (5%): $5.75\nTotal: $150.75",
+      "structuredData": {
+        "vendor": "Staples",
+        "invoiceNumber": "INV-2024-001",
+        "invoiceDate": "2024-01-10",
+        "subtotal": 145.00,
+        "tax": 5.75,
+        "total": 150.75,
+        "lineItems": [
+          {
+            "description": "Pens (50)",
+            "unitPrice": 1.50,
+            "quantity": 50,
+            "total": 75.00
+          },
+          {
+            "description": "Paper (10 reams)",
+            "unitPrice": 7.00,
+            "quantity": 10,
+            "total": 70.00
+          }
+        ]
+      },
+      "confidence": 0.95,
+      "processedAt": "2024-01-15T11:00:00Z"
+    },
+    "files": [
+      {
+        "fileId": "file_456e7890-e89b-12d3-a456-426614174000",
+        "fileName": "invoice.pdf",
+        "fileSize": 1048576,
+        "contentType": "application/pdf",
+        "uploadedAt": "2024-01-15T10:45:00Z"
+      }
+    ],
+    "approvalHistory": [
+      {
+        "action": "APPROVED",
+        "performedBy": "john.doe@company.com",
+        "performedAt": "2024-01-15T14:30:00Z",
+        "comments": "Invoice verified and approved for payment"
+      }
+    ]
+  },
+  "message": "Bill details retrieved successfully",
+  "timestamp": "2024-01-15T16:15:00Z"
+}

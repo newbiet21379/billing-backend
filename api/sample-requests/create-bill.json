@@ -1,0 +1,8 @@
+{
+  "title": "Office Supplies Invoice",
+  "total": 150.75,
+  "vendor": "Staples",
+  "dueDate": "2024-12-15",
+  "category": "OFFICE_SUPPLIES",
+  "description": "Monthly office supplies restocking"
+}

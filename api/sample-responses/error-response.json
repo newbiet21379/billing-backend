@@ -1,0 +1,23 @@
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "details": [
+      {
+        "field": "total",
+        "message": "Total amount must be greater than 0"
+      },
+      {
+        "field": "title",
+        "message": "Title is required and cannot be blank"
+      },
+      {
+        "field": "dueDate",
+        "message": "Due date must be in the future"
+      }
+    ]
+  },
+  "timestamp": "2024-01-15T16:45:00Z",
+  "path": "/api/commands/bills"
+}

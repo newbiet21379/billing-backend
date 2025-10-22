@@ -1,0 +1,34 @@
+{
+  "filters": {
+    "title": {
+      "contains": "office",
+      "caseSensitive": false
+    },
+    "total": {
+      "min": 100.00,
+      "max": 200.00
+    },
+    "vendor": {
+      "in": ["Staples", "Office Depot", "Amazon"]
+    },
+    "status": ["PENDING", "COMPLETED"],
+    "createdDate": {
+      "from": "2024-01-01T00:00:00Z",
+      "to": "2024-01-31T23:59:59Z"
+    }
+  },
+  "pagination": {
+    "page": 0,
+    "size": 20,
+    "sort": [
+      {
+        "field": "createdAt",
+        "direction": "DESC"
+      },
+      {
+        "field": "total",
+        "direction": "ASC"
+      }
+    ]
+  }
+}

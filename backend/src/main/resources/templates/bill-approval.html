@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{base-template :: _}" th:with="headerSubtitle='Bill Decision Notification'">
+<body>
+<div th:fragment="bodyContent">
+    <div class="section">
+        <h2 class="section-title">Bill Decision</h2>
+        <div class="highlight"
+             th:classappend="${decision == 'APPROVED' ? 'success' : 'error'}">
+            <span th:if="${decision == 'APPROVED'}">
+                <strong>✓ Approved!</strong> Bill <strong th:text="${billId}">BILL-123</strong> has been approved for processing.
+            </span>
+            <span th:if="${decision == 'REJECTED'}">
+                <strong>✗ Rejected!</strong> Bill <strong th:text="${billId}">BILL-123</strong> has been rejected.
+            </span>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3 class="section-title">Decision Details</h3>
+        <div class="data-row">
+            <span class="data-label">Bill ID:</span>
+            <span class="data-value" th:text="${billId}">BILL-123</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Decision:</span>
+            <span class="data-value">
+                <span class="status-badge"
+                      th:classappend="${decision == 'APPROVED' ? 'status-approved' : 'status-rejected'}"
+                      th:text="${decisionDisplay}">approved</span>
+            </span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Approved By:</span>
+            <span class="data-value" th:text="${approverId}">john.doe@company.com</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Decision Date:</span>
+            <span class="data-value" th:text="${approvedAt}">2024-01-01 12:00:00</span>
+        </div>
+        <div class="data-row" th:if="${reason != null and !#strings.isEmpty(reason)}">
+            <span class="data-label">Reason:</span>
+            <span class="data-value" th:text="${reason}">Bill amount exceeds monthly budget</span>
+        </div>
+    </div>
+
+    <div th:if="${decision == 'APPROVED'}" class="section">
+        <h3 class="section-title">Next Steps</h3>
+        <ul style="padding-left: 20px; margin: 0;">
+            <li>The bill will proceed to payment processing</li>
+            <li>Financial records will be updated</li>
+            <li>Vendor will be notified of the approval</li>
+            <li>Payment will be scheduled according to terms</li>
+        </ul>
+    </div>
+
+    <div th:if="${decision == 'REJECTED'}" class="section">
+        <h3 class="section-title">Rejection Details</h3>
+        <div th:if="${reason != null and !#strings.isEmpty(reason)}">
+            <p><strong>Reason for rejection:</strong></p>
+            <div class="highlight warning" style="margin-top: 10px;" th:text="${reason}">
+                Bill amount exceeds monthly budget allocation for Q1 2024.
+            </div>
+        </div>
+        <div th:if="${reason == null or #strings.isEmpty(reason)}">
+            <div class="highlight warning" style="margin-top: 10px;">
+                No specific reason was provided for this rejection.
+            </div>
+        </div>
+
+        <h4 style="margin-top: 20px; margin-bottom: 10px;">Recommended Actions:</h4>
+        <ul style="padding-left: 20px; margin: 0;">
+            <li>Review the rejection reason with the approver</li>
+            <li>Make necessary corrections to the bill information</li>
+            <li>Resubmit the bill for approval if appropriate</li>
+            <li>Contact finance department if you have questions</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3 class="section-title">Quick Actions</h3>
+        <div style="text-align: center; margin: 20px 0;">
+            <a href="#" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 500; margin: 5px;">
+                View Bill Details
+            </a>
+            <a href="#" style="display: inline-block; background: #f8f9fa; color: #333; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 500; margin: 5px; border: 1px solid #ddd;">
+                View All Bills
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${decision == 'REJECTED'}" class="section">
+        <div class="highlight" style="background-color: #f0f7ff; border-left: 4px solid #1976d2; color: #1565c0;">
+            <strong>Need Help?</strong> If you believe this decision was made in error,
+            please contact the finance team at <a href="mailto:finance@company.com" style="color: #1976d2;">finance@company.com</a>
+            to discuss the bill details and approval process.
+        </div>
+    </div>
+</div>
+</body>
+</html>

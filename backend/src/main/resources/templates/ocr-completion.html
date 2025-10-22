@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{base-template :: _}" th:with="headerSubtitle='OCR Processing Complete'">
+<body>
+<div th:fragment="bodyContent">
+    <div class="section">
+        <h2 class="section-title">OCR Processing Complete</h2>
+        <div class="highlight success">
+            <strong>Success!</strong> OCR processing has been completed for bill <strong th:text="${billId}">BILL-123</strong>.
+        </div>
+    </div>
+
+    <div class="section">
+        <h3 class="section-title">Extracted Information</h3>
+        <div class="data-row">
+            <span class="data-label">Bill ID:</span>
+            <span class="data-value" th:text="${billId}">BILL-123</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Document Title:</span>
+            <span class="data-value" th:text="${extractedTitle}">Invoice_2024.pdf</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Total Amount:</span>
+            <span class="data-value" th:text="${extractedTotal}">$250.00</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Confidence Score:</span>
+            <span class="data-value" th:text="${confidence}">95%</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Processing Time:</span>
+            <span class="data-value" th:text="${processingTime}">2.3 seconds</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Completed At:</span>
+            <span class="data-value" th:text="${completedAt}">2024-01-01 12:00:00</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3 class="section-title">Extracted Text Preview</h3>
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.4; color: #555; white-space: pre-wrap;" th:text="${extractedText}">
+            INVOICE #12345
+            Date: January 1, 2024
+            Amount: $250.00
+            For: Consulting services...
+        </div>
+    </div>
+
+    <div class="section">
+        <h3 class="section-title">Next Steps</h3>
+        <ul style="padding-left: 20px; margin: 0;">
+            <li>Review the extracted information for accuracy</li>
+            <li>Verify the total amount matches the actual bill</li>
+            <li>Approve or reject the bill for further processing</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3 class="section-title">Quick Actions</h3>
+        <div style="text-align: center; margin: 20px 0;">
+            <a href="#" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 500; margin: 5px;">
+                Review Bill Details
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

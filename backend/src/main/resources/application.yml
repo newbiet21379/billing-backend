@@ -1,0 +1,209 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: billing-backend
+
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/billing
+    username: billing_user
+    password: billing_password
+    driver-class-name: org.postgresql.Driver
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # Mail Configuration (MailHog for development)
+  mail:
+    host: ${SMTP_HOST:mailhog}
+    port: ${SMTP_PORT:1025}
+    protocol: smtp
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:false}
+          starttls:
+            enable: ${SMTP_STARTTLS:false}
+        debug: ${SMTP_DEBUG:false}
+
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: true
+    deserialization:
+      fail-on-unknown-properties: false
+
+  # Thymeleaf Configuration (for email templates)
+  thymeleaf:
+    cache: ${THYMELEAF_CACHE:true}
+    mode: HTML
+    encoding: UTF-8
+    servlet:
+      content-type: text/html
+    check-template-location: true
+
+# Axon Framework Configuration
+axon:
+  axonserver:
+    servers: localhost:8124
+  serializer:
+    general: jackson
+    events: jackson
+    messages: jackson
+
+# OpenAPI Documentation Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    try-it-out-enabled: true
+    display-request-duration: true
+    disable-swagger-default-url: true
+    display-operation-id: false
+    default-models-expand-depth: 1
+    default-model-expand-depth: 1
+  show-actuator: false
+  group-configs:
+    - group: 'public'
+      display-name: 'Public API'
+      paths-to-match: '/api/**'
+    - group: 'management'
+      display-name: 'Management API'
+      paths-to-match: '/actuator/**'
+
+# Management/Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,prometheus,httptrace,loggers,threaddump,heapdump
+      base-path: /actuator
+    cors:
+      allowed-origins: "*"
+      allowed-methods: GET,POST
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      group:
+        liveness:
+          include: "livenessState,diskSpace,ping"
+        readiness:
+          include: "readinessState,db,ocr,minio,axon"
+    metrics:
+      enabled: true
+    info:
+      enabled: true
+    prometheus:
+      enabled: true
+    httptrace:
+      enabled: true
+    loggers:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 60s
+      jmx:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+      sla:
+        http.server.requests: 100ms, 200ms, 500ms, 1s, 2s
+    tags:
+      application: billing-backend
+  info:
+    env:
+      enabled: true
+    build:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 0.1
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+
+# Logging Configuration
+logging:
+  level:
+    com.acme.billing: DEBUG
+    org.axonframework: INFO
+    org.springframework.orm.jpa: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# OCR Service Configuration
+ocr:
+  service:
+    url: http://localhost:7070
+    timeout: 30s
+
+# MinIO S3 Configuration
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  region: ${MINIO_REGION:us-east-1}
+
+# Billing Application Configuration
+billing:
+  storage:
+    bucket-name: ${STORAGE_BUCKET_NAME:billing-documents}
+    max-file-size: ${STORAGE_MAX_FILE_SIZE:10MB}
+    allowed-content-types:
+      - ${STORAGE_CONTENT_TYPE_1:application/pdf}
+      - ${STORAGE_CONTENT_TYPE_2:image/jpeg}
+      - ${STORAGE_CONTENT_TYPE_3:image/png}
+      - ${STORAGE_CONTENT_TYPE_4:image/jpg}
+    presigned-url-expiration-minutes: ${STORAGE_PRESIGNED_EXPIRATION:60}
+    auto-create-bucket: ${STORAGE_AUTO_CREATE_BUCKET:true}
+    multipart-upload-enabled: ${STORAGE_MULTIPART_ENABLED:true}
+    multipart-part-size-mb: ${STORAGE_MULTIPART_PART_SIZE:5}
+
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      ocrService:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+      emailService:
+        failure-rate-threshold: 60
+        wait-duration-in-open-state: 60s
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+
+# Billing Notifications Configuration
+billing:
+  notifications:
+    enabled: ${BILLING_NOTIFICATIONS_ENABLED:true}
+    from-address: ${BILLING_FROM_ADDRESS:noreply@billing.local}
+    admin-email: ${BILLING_ADMIN_EMAIL:admin@billing.local}
+    retry-attempts: ${EMAIL_RETRY_ATTEMPTS:3}
+    retry-delay: ${EMAIL_RETRY_DELAY:5s}

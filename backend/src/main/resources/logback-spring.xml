@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Include Spring Boot defaults -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- App properties for log level configuration -->
+    <springProperty scope="context" name="appName" source="spring.application.name"/>
+    <springProperty scope="context" name="logLevel" source="logging.level.com.acme.billing" defaultValue="INFO"/>
+
+    <!-- Custom fields for structured logging -->
+    <property name="LOG_JSON_CONSOLE_PRETTY_PRINT" value="false"/>
+    <property name="LOG_JSON_INCLUDE_CALLER_DATA" value="true"/>
+    <property name="LOG_JSON_INCLUDE_STACKTRACE" value="true"/>
+    <property name="LOG_JSON_SHORT_STACKTRACE_LENGTH" value="10"/>
+
+    <!-- JSON Appender for Console Output -->
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+
+                <message/>
+
+                <mdc/>
+
+                <arguments>
+                    <includeNonStructuredKeyValuePairs>true</includeNonStructuredKeyValuePairs>
+                </arguments>
+
+                <stackTrace>
+                    <fieldName>stack_trace</fieldName>
+                    <include>${LOG_JSON_INCLUDE_STACKTRACE}</include>
+                    <shortenedClassNameLength>20</shortenedClassNameLength>
+                </stackTrace>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>application</key>
+                        <value>${appName}</value>
+                    </pattern>
+                </pattern>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>version</key>
+                        <value>${app.version:-unknown}</value>
+                    </pattern>
+                </pattern>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>environment</key>
+                        <value>${spring.profiles.active:-default}</value>
+                    </pattern>
+                </pattern>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>correlation_id</key>
+                        <defaultValue>unknown</defaultValue>
+                        <mdcKey>correlationId</mdcKey>
+                    </pattern>
+                </pattern>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>trace_id</key>
+                    </pattern>
+                </pattern>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>span_id</key>
+                    </pattern>
+                </pattern>
+
+                <callerData>
+                    <fieldName>caller_data</fieldName>
+                    <include>${LOG_JSON_INCLUDE_CALLER_DATA}</include>
+                </callerData>
+
+                <jsonProviders/>
+            </providers>
+
+            <jsonGeneratorDecorator class="net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator">
+                <prettyPrint>${LOG_JSON_CONSOLE_PRETTY_PRINT}</prettyPrint>
+            </jsonGeneratorDecorator>
+        </encoder>
+    </appender>
+
+    <!-- File Appender for JSON Logs -->
+    <appender name="FILE_JSON" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/${appName}.json</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/${appName}-%d{yyyy-MM-dd}.%i.json.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+
+                <message/>
+
+                <mdc/>
+
+                <arguments/>
+
+                <stackTrace>
+                    <fieldName>stack_trace</fieldName>
+                </stackTrace>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>application</key>
+                        <value>${appName}</value>
+                    </pattern>
+                </pattern>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>version</key>
+                        <value>${app.version:-unknown}</value>
+                    </pattern>
+                </pattern>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>environment</key>
+                        <value>${spring.profiles.active:-default}</value>
+                    </pattern>
+                </pattern>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>correlation_id</key>
+                        <defaultValue>unknown</defaultValue>
+                        <mdcKey>correlationId</mdcKey>
+                    </pattern>
+                </pattern>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>trace_id</key>
+                    </pattern>
+                </pattern>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>span_id</key>
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Error File Appender -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+        <file>logs/${appName}-error.json</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/${appName}-error-%d{yyyy-MM-dd}.%i.json.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+
+                <message/>
+
+                <mdc/>
+
+                <stackTrace>
+                    <fieldName>stack_trace</fieldName>
+                </stackTrace>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>application</key>
+                        <value>${appName}</value>
+                    </pattern>
+                </pattern>
+
+                <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
+                    <pattern>
+                        <key>correlation_id</key>
+                        <defaultValue>unknown</defaultValue>
+                        <mdcKey>correlationId</mdcKey>
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Async Appender for improved performance -->
+    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>1024</queueSize>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="CONSOLE_JSON"/>
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>1024</queueSize>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="FILE_JSON"/>
+    </appender>
+
+    <appender name="ASYNC_ERROR" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>1024</queueSize>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="ERROR_FILE"/>
+    </appender>
+
+    <!-- Application Logger Configuration -->
+    <logger name="com.acme.billing" level="${logLevel}" additivity="false">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+        <appender-ref ref="ASYNC_ERROR"/>
+    </logger>
+
+    <!-- Axon Framework Logging -->
+    <logger name="org.axonframework" level="INFO" additivity="false">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </logger>
+
+    <!-- Spring Framework Logging -->
+    <logger name="org.springframework" level="INFO" additivity="false">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </logger>
+
+    <!-- Database Logging -->
+    <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </logger>
+
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </logger>
+
+    <!-- HTTP Client Logging -->
+    <logger name="org.springframework.web.reactive.function.client" level="DEBUG" additivity="false">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </logger>
+
+    <!-- MinIO Client Logging -->
+    <logger name="io.minio" level="INFO" additivity="false">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </logger>
+
+    <!-- Root Logger -->
+    <root level="INFO">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+        <appender-ref ref="ASYNC_ERROR"/>
+    </root>
+
+</configuration>

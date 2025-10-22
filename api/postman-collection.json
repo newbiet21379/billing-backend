@@ -1,0 +1,953 @@
+{
+  "info": {
+    "_postman_id": "b1a2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Billing & Expense Processing API",
+    "description": "Complete API collection for Billing & Expense Processing Service with CQRS and Event Sourcing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Commands (Write Operations)",
+      "description": "Bill management commands following CQRS pattern",
+      "item": [
+        {
+          "name": "Create Bill",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success property\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"Bill ID is generated\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.billId).to.be.a('string');",
+                  "    pm.expect(jsonData.data.billId).to.match(/^bill_/);",
+                  "});",
+                  "",
+                  "// Store bill ID for subsequent requests",
+                  "if (pm.response.json().success) {",
+                  "    pm.collectionVariables.set(\"billId\", pm.response.json().data.billId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Office Supplies Invoice\",\n  \"total\": 150.75,\n  \"vendor\": \"Staples\",\n  \"dueDate\": \"2024-12-15\",\n  \"category\": \"OFFICE_SUPPLIES\",\n  \"description\": \"Monthly office supplies restocking\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/commands/bills",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "commands",
+                "bills"
+              ]
+            },
+            "description": "Creates a new bill with provided information. The bill will be created in DRAFT status."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Bill",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success property\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Office Supplies Invoice\",\n  \"total\": 175.50,\n  \"vendor\": \"Office Depot\",\n  \"dueDate\": \"2024-12-20\",\n  \"category\": \"OFFICE_SUPPLIES\",\n  \"description\": \"Updated monthly office supplies restocking\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/commands/bills/{{billId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "commands",
+                "bills",
+                "{{billId}}"
+              ]
+            },
+            "description": "Updates an existing bill's information. Only bills in DRAFT or REJECTED status can be updated."
+          },
+          "response": []
+        },
+        {
+          "name": "Attach File to Bill",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success property\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});",
+                  "",
+                  "// Store file ID for subsequent requests",
+                  "if (pm.response.json().success) {",
+                  "    pm.collectionVariables.set(\"fileId\", pm.response.json().data.fileId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/invoice.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/commands/bills/{{billId}}/file",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "commands",
+                "bills",
+                "{{billId}}",
+                "file"
+              ]
+            },
+            "description": "Uploads and attaches a file to an existing bill, triggering OCR processing. Supported formats: PDF, JPG, PNG, TIFF, BMP"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Bill",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Bill status is APPROVED\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.equal('APPROVED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approvedBy\": \"john.doe@company.com\",\n  \"comments\": \"Invoice verified and approved for payment\",\n  \"approvedAt\": \"2024-01-15T14:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/commands/bills/{{billId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "commands",
+                "bills",
+                "{{billId}}",
+                "approve"
+              ]
+            },
+            "description": "Approves a bill for payment processing. Only bills in COMPLETED status can be approved."
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Bill",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Bill status is REJECTED\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.equal('REJECTED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectedBy\": \"jane.smith@company.com\",\n  \"reason\": \"Invalid vendor information\",\n  \"comments\": \"Vendor address does not match records\",\n  \"rejectedAt\": \"2024-01-15T14:45:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/commands/bills/{{billId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "commands",
+                "bills",
+                "{{billId}}",
+                "reject"
+              ]
+            },
+            "description": "Rejects a bill with specified reasons. Only bills in COMPLETED status can be rejected."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Bill",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Bill status is DELETED\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.equal('DELETED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/commands/bills/{{billId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "commands",
+                "bills",
+                "{{billId}}"
+              ]
+            },
+            "description": "Soft-deletes a bill (archived but not permanently removed)."
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Set API key if not already set",
+              "if (!pm.collectionVariables.get(\"apiKey\")) {",
+              "    pm.collectionVariables.set(\"apiKey\", \"dev-api-key\");",
+              "}",
+              "",
+              "// Ensure baseUrl is set",
+              "if (!pm.collectionVariables.get(\"baseUrl\")) {",
+              "    pm.collectionVariables.set(\"baseUrl\", \"http://localhost:8080\");",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Queries (Read Operations)",
+      "description": "Bill queries optimized for read performance",
+      "item": [
+        {
+          "name": "List Bills",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success property\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"Response has content array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('content');",
+                  "    pm.expect(jsonData.data.content).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/queries/bills?page=0&size=20&sort=createdAt,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "queries",
+                "bills"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc"
+                }
+              ]
+            },
+            "description": "Retrieves a paginated list of bills with optional filtering and sorting."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter Bills by Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All bills have PENDING status\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var allPending = jsonData.data.content.every(function(bill) {",
+                  "        return bill.status === 'PENDING';",
+                  "    });",
+                  "    pm.expect(allPending).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/queries/bills?status=PENDING&vendor=Staples",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "queries",
+                "bills"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                },
+                {
+                  "key": "vendor",
+                  "value": "Staples"
+                }
+              ]
+            },
+            "description": "Retrieves bills filtered by status and vendor."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Bill Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has OCR data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('ocrData');",
+                  "});",
+                  "",
+                  "pm.test(\"Response has files array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('files');",
+                  "    pm.expect(jsonData.data.files).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/queries/bills/{{billId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "queries",
+                "bills",
+                "{{billId}}"
+              ]
+            },
+            "description": "Retrieves detailed information for a specific bill including OCR data and file attachments."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Bills",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has search results\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('content');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"title\": {\n      \"contains\": \"office\",\n      \"caseSensitive\": false\n    },\n    \"total\": {\n      \"min\": 100.00,\n      \"max\": 200.00\n    },\n    \"vendor\": {\n      \"in\": [\"Staples\", \"Office Depot\", \"Amazon\"]\n    },\n    \"status\": [\"PENDING\", \"COMPLETED\"],\n    \"createdDate\": {\n      \"from\": \"2024-01-01T00:00:00Z\",\n      \"to\": \"2024-01-31T23:59:59Z\"\n    }\n  },\n  \"pagination\": {\n    \"page\": 0,\n    \"size\": 20,\n    \"sort\": [\n      {\n        \"field\": \"createdAt\",\n        \"direction\": \"DESC\"\n      }\n    ]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/queries/bills/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "queries",
+                "bills",
+                "search"
+              ]
+            },
+            "description": "Advanced search with complex filtering criteria."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Bill Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has statistical breakdowns\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('statusBreakdown');",
+                  "    pm.expect(jsonData.data).to.have.property('categoryBreakdown');",
+                  "    pm.expect(jsonData.data).to.have.property('vendorBreakdown');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/queries/bills/statistics?period=MONTHLY&year=2024&month=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "queries",
+                "bills",
+                "statistics"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "MONTHLY"
+                },
+                {
+                  "key": "year",
+                  "value": "2024"
+                },
+                {
+                  "key": "month",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Retrieves statistical information about bills for the specified period."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Storage Operations",
+      "description": "File storage and management operations",
+      "item": [
+        {
+          "name": "Generate Upload URL",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has upload URL\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('uploadUrl');",
+                  "    pm.expect(jsonData.data.uploadUrl).to.be.a('string');",
+                  "});",
+                  "",
+                  "// Store upload URL and file ID for subsequent requests",
+                  "if (pm.response.json().success) {",
+                  "    pm.collectionVariables.set(\"uploadUrl\", pm.response.json().data.uploadUrl);",
+                  "    pm.collectionVariables.set(\"fileId\", pm.response.json().data.fileId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileName\": \"invoice.pdf\",\n  \"contentType\": \"application/pdf\",\n  \"fileSize\": 1048576,\n  \"bucket\": \"bills\",\n  \"expirationMinutes\": 15\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/storage/upload-url",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "storage",
+                "upload-url"
+              ]
+            },
+            "description": "Generates a pre-signed URL for direct file upload to MinIO."
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Download URL",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has download URL\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('downloadUrl');",
+                  "    pm.expect(jsonData.data.downloadUrl).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/storage/files/{{fileId}}/download-url",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "storage",
+                "files",
+                "{{fileId}}",
+                "download-url"
+              ]
+            },
+            "description": "Generates a download URL for a stored file."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health and Monitoring",
+      "description": "System health checks and monitoring endpoints",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Health status is UP\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.equal('UP');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Application health check endpoint."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has metrics array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('names');",
+                  "    pm.expect(jsonData.names).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/metrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "metrics"
+              ]
+            },
+            "description": "Retrieves application metrics for monitoring."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Application Info",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has app information\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('app');",
+                  "    pm.expect(jsonData).to.have.property('build');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "info"
+              ]
+            },
+            "description": "Retrieves application information and build details."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Set default environment variables if not present",
+          "if (!pm.collectionVariables.get(\"apiKey\")) {",
+          "    pm.collectionVariables.set(\"apiKey\", \"dev-api-key\");",
+          "}",
+          "",
+          "if (!pm.collectionVariables.get(\"baseUrl\")) {",
+          "    pm.collectionVariables.set(\"baseUrl\", \"http://localhost:8080\");",
+          "}",
+          "",
+          "// Log current request for debugging",
+          "console.log(\"Request: \" + pm.info.requestName);",
+          "console.log(\"URL: \" + pm.request.url.toString());"
+        ],
+        "type": "text/javascript"
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "// Log response for debugging",
+          "console.log(\"Response Status: \" + pm.response.code);",
+          "console.log(\"Response Time: \" + pm.response.responseTime + \"ms\");",
+          "",
+          "// Check for common error patterns",
+          "if (pm.response.code >= 400) {",
+          "    console.log(\"Error Response: \" + pm.response.json());",
+          "}",
+          "",
+          "// Verify response is JSON for successful requests",
+          "if (pm.response.code < 300 && pm.response.headers.get(\"Content-Type\") && pm.response.headers.get(\"Content-Type\").includes(\"json\")) {",
+          "    try {",
+          "        pm.response.json();",
+          "    } catch (e) {",
+          "        pm.test(\"Response is valid JSON\", function () {",
+          "            pm.expect.fail(\"Response is not valid JSON: \" + e.message);",
+          "        });",
+          "    }",
+          "}"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "apiKey",
+      "value": "dev-api-key"
+    },
+    {
+      "key": "billId",
+      "value": ""
+    },
+    {
+      "key": "fileId",
+      "value": ""
+    },
+    {
+      "key": "uploadUrl",
+      "value": ""
+    }
+  ]
+}

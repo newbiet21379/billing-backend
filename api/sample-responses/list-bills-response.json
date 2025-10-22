@@ -1,0 +1,52 @@
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "billId": "bill_123e4567-e89b-12d3-a456-426614174000",
+        "title": "Office Supplies Invoice",
+        "total": 150.75,
+        "vendor": "Staples",
+        "status": "PENDING",
+        "category": "OFFICE_SUPPLIES",
+        "createdAt": "2024-01-15T10:30:00Z",
+        "dueDate": "2024-12-15T00:00:00Z",
+        "updatedAt": "2024-01-15T10:45:00Z"
+      },
+      {
+        "billId": "bill_234e5678-e89b-12d3-a456-426614174001",
+        "title": "Software License Renewal",
+        "total": 299.99,
+        "vendor": "Microsoft",
+        "status": "COMPLETED",
+        "category": "SOFTWARE",
+        "createdAt": "2024-01-14T09:15:00Z",
+        "dueDate": "2024-02-01T00:00:00Z",
+        "updatedAt": "2024-01-14T10:30:00Z"
+      },
+      {
+        "billId": "bill_345e6789-e89b-12d3-a456-426614174002",
+        "title": "Internet Service Bill",
+        "total": 89.99,
+        "vendor": "Comcast",
+        "status": "APPROVED",
+        "category": "UTILITIES",
+        "createdAt": "2024-01-13T14:20:00Z",
+        "dueDate": "2024-02-05T00:00:00Z",
+        "updatedAt": "2024-01-15T11:45:00Z"
+      }
+    ],
+    "pageable": {
+      "page": 0,
+      "size": 20,
+      "sort": "createdAt,desc"
+    },
+    "totalElements": 3,
+    "totalPages": 1,
+    "first": true,
+    "last": true,
+    "numberOfElements": 3
+  },
+  "message": "Bills retrieved successfully",
+  "timestamp": "2024-01-15T16:00:00Z"
+}
